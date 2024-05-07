@@ -8,7 +8,9 @@ import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import kotlin.random.Random
 
 data class Article(val title: String)
 
@@ -52,5 +54,16 @@ class ArticleService(datasource: HikariDataSource) {
             }.singleOrNull()
         }
         return title
+    }
+
+    fun readRandomTitle(): String {
+        return transaction {
+            val id = Random.nextInt(1, Articles.selectAll().count().toInt()+1)
+            Articles.select {
+                Articles.id eq id
+            }.map{
+                it[Articles.title]
+            }.single()
+        }
     }
 }

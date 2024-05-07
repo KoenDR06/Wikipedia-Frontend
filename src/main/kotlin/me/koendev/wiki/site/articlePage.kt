@@ -1,19 +1,20 @@
 package me.koendev.wiki.site
 
+import com.github.nwillc.ksvg.elements.SVG
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.html.*
-import io.ktor.server.routing.*
-import com.github.nwillc.ksvg.elements.SVG
 import io.ktor.server.response.*
-import kotlinx.html.*
+import io.ktor.server.routing.*
+import kotlinx.html.body
+import kotlinx.html.head
 import kotlinx.html.unsafe
 import me.koendev.wiki.plugins.articleService
 import me.koendev.wiki.plugins.linkService
-import me.koendev.wiki.site.svg.arrow
+import me.koendev.wiki.site.svg.label
+import me.koendev.wiki.site.svg.line
 import me.koendev.wiki.site.svg.node
 import java.util.*
-import kotlin.math.*
 
 fun Routing.articlePage() {
     get("/article/{article}") {
@@ -24,57 +25,51 @@ fun Routing.articlePage() {
             call.respondText("404 Not Found", status = HttpStatusCode.NotFound)
         } else {
             val children = linkService.readChildren(articleId)
+
             val parents = linkService.readParents(articleId)
             val currentArticle = articleService.read(articleId)!!
 
-            val viewBoxHeight = 1080
-            val viewBoxWidth = 1920
-            val minimumCircleSize = 50
-            val nodeSpacing = 10
-
-            var numberOfNodes = children.size + parents.size - 1
-            if (numberOfNodes == 0) numberOfNodes = 1
-            var radius = (numberOfNodes * nodeSpacing) / (2*PI)
-            if (radius < minimumCircleSize) {
-                radius = minimumCircleSize.toDouble()
-            }
+            val viewBoxHeight = 1080.0
+            val viewBoxWidth = 1920.0
 
             val svg: SVG = SVG.svg(true) {
                 height = "$viewBoxHeight"
                 width = "$viewBoxWidth"
 
-                node(viewBoxWidth / 2.0, viewBoxHeight / 2.0, "source")
-
-                for ((index, child) in children.withIndex()) {
-                    val fromX = viewBoxWidth / 2.0
-                    val fromY = viewBoxHeight / 2.0
-                    var toX = fromX + radius*cos((index.toDouble()/numberOfNodes) * 2 * PI)
-                    var toY = fromY + radius*sin((index.toDouble()/numberOfNodes) * 2 * PI)
-                    if (toX < 0) toX = 5.0
-                    if (toX > viewBoxWidth) toX = viewBoxWidth - 5.0
-                    if (toY < 0) toY = 5.0
-                    if (toY > viewBoxHeight) toY = viewBoxHeight - 5.0
+                g {
+                    for ((index, childId) in children.withIndex()) {
+                        val fromX = viewBoxWidth / 2.0
+                        val fromY = viewBoxHeight / 2.0
+                        val toX = viewBoxWidth / children.size * index
+                        val toY = fromY + 200
 
 
-                    node(toX, toY, "child")
-                    arrow(fromX, fromY, toX, toY, "child")
-                    // TODO Put label next to node
+                        line(fromX, fromY, toX, toY, "child")
+                        node(toX, toY, "child")
+                        /*g {
+                            label(toX, toY, articleService.read(childId)!!)
+                        }*/
+                    }
                 }
 
-                for ((index, parent) in parents.withIndex()) {
-                    val fromX = viewBoxWidth / 2.0
-                    val fromY = viewBoxHeight / 2.0
-                    var toX = fromX + radius*cos((-index.toDouble()/numberOfNodes) * 2 * PI)
-                    var toY = fromY + radius*sin((-index.toDouble()/numberOfNodes) * 2 * PI)
-                    if (toX < 0) toX = 5.0
-                    if (toX > viewBoxWidth) toX = viewBoxWidth - 5.0
-                    if (toY < 0) toY = 5.0
-                    if (toY > viewBoxHeight) toY = viewBoxHeight - 5.0
+                g {
+                    for ((index, parentId) in parents.withIndex()) {
+                        val fromX = viewBoxWidth / 2.0
+                        val fromY = viewBoxHeight / 2.0
+                        val toX = viewBoxWidth / parents.size * index
+                        val toY = fromY - 200
 
+                        line(fromX, fromY, toX, toY, "parent")
+                        node(toX, toY, "parent")
+                        /*g {
+                            label(toX, toY, articleService.read(parentId)!!)
+                        }*/
+                    }
+                }
 
-                    node(toX, toY, "parent")
-                    arrow(fromX, fromY, toX, toY, "parent")
-                    // TODO Put label next to node
+                g {
+                    node(viewBoxWidth / 2.0, viewBoxHeight / 2.0, "source")
+                    label(viewBoxWidth / 2.0, viewBoxHeight / 2.0, currentArticle)
                 }
             }
 
@@ -82,35 +77,6 @@ fun Routing.articlePage() {
                 head {
 
                 }
-                /*body {
-                h2 {
-                    +"Children of $currentArticle: "
-                }
-                ul {
-                    for (child in children) {
-                        li {
-                            a {
-                                href = "/article/$child"
-                                +articleService.read(child)!!
-                            }
-                        }
-                    }
-                }
-
-                h2 {
-                    +"Parents of $currentArticle: "
-                }
-                ul {
-                    for (parent in parents) {
-                        li {
-                            a {
-                                href = "/article/$parent"
-                                +articleService.read(parent)!!
-                            }
-                        }
-                    }
-                }
-            }*/
 
                 body {
                     unsafe {
@@ -121,4 +87,3 @@ fun Routing.articlePage() {
         }
     }
 }
-
