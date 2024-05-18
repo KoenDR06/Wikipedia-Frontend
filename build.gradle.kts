@@ -56,6 +56,4 @@ dependencies {
     implementation("io.ktor:ktor-server-resources")
     implementation("org.mariadb.jdbc:mariadb-java-client:3.3.2")
     implementation("com.zaxxer:HikariCP:5.0.0")
-    implementation("com.github.nwillc.ksvg:ksvg:master-SNAPSHOT")
-
 }

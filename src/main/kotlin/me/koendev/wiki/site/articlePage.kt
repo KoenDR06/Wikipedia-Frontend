@@ -6,8 +6,7 @@ import io.ktor.server.application.*
 import io.ktor.server.html.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.html.body
-import kotlinx.html.head
+import kotlinx.html.*
 import kotlinx.html.unsafe
 import me.koendev.wiki.plugins.articleService
 import me.koendev.wiki.plugins.linkService
@@ -29,41 +28,55 @@ fun Routing.articlePage() {
             val parents = linkService.readParents(articleId)
             val currentArticle = articleService.read(articleId)!!
 
-            val viewBoxHeight = 1080.0
-            val viewBoxWidth = 1920.0
+            val viewBoxHeight = 2160.0*2
+            val viewBoxWidth = 3840.0*2
 
             val svg: SVG = SVG.svg(true) {
                 height = "$viewBoxHeight"
                 width = "$viewBoxWidth"
 
                 g {
+                    val fromX = viewBoxWidth / 2.0
+                    val fromY = viewBoxHeight / 2.0
+                    val toY = fromY + 500
+                    val xOffset = children.size * 20.0 / 2 - fromX
                     for ((index, childId) in children.withIndex()) {
-                        val fromX = viewBoxWidth / 2.0
-                        val fromY = viewBoxHeight / 2.0
-                        val toX = viewBoxWidth / children.size * index
-                        val toY = fromY + 200
+//                        val toX = (viewBoxWidth-300) / children.size * index + 0.5 * (viewBoxWidth-300) / children.size + 150
+                        val toX = index * 20.0 + xOffset
 
 
                         line(fromX, fromY, toX, toY, "child")
                         node(toX, toY, "child")
-                        /*g {
-                            label(toX, toY, articleService.read(childId)!!)
-                        }*/
+                        g {
+                            label(
+                                px = 0.0,
+                                py = 0.0,
+                                text = articleService.read(childId)!!,
+                                transformation = "translate($toX, $toY) rotate(45, 0, 0)"
+                            )
+                        }
                     }
                 }
 
                 g {
+                    val fromX = viewBoxWidth / 2.0
+                    val fromY = viewBoxHeight / 2.0
+                    val toY = fromY - 500
+                    val xOffset = parents.size * 20.0 / 2 - fromX
                     for ((index, parentId) in parents.withIndex()) {
-                        val fromX = viewBoxWidth / 2.0
-                        val fromY = viewBoxHeight / 2.0
-                        val toX = viewBoxWidth / parents.size * index
-                        val toY = fromY - 200
+//                        val toX = (viewBoxWidth-300) / parents.size * index + 0.5 * (viewBoxWidth-300) / parents.size + 150
+                        val toX = index * 20.0 + xOffset
 
                         line(fromX, fromY, toX, toY, "parent")
                         node(toX, toY, "parent")
-                        /*g {
-                            label(toX, toY, articleService.read(parentId)!!)
-                        }*/
+                        g {
+                            label(
+                                px = 0.0,
+                                py = 0.0,
+                                text = articleService.read(parentId)!!,
+                                transformation = "translate($toX, $toY) rotate(-45, 0, 0)"
+                            )
+                        }
                     }
                 }
 
